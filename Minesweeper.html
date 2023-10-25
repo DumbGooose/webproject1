@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Minesweeper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            gap: 1px;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            background-color: #ccc;
+            border: 1px solid #999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        .cell.revealed {
+            background-color: #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="board" id="board"></div>
+
+    <script>
+        const board = document.getElementById('board');
+        const rows = 10;
+        const cols = 10;
+        const mines = 20;
+        const cells = [];
+
+        // Create the game board
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.row = i;
+                cell.dataset.col = j;
+                cells.push(cell);
+                board.appendChild(cell);
+            }
+        }
+
+        // Add mines randomly
+        const mineIndexes = [];
+        while (mineIndexes.length < mines) {
+            const index = Math.floor(Math.random() * (rows * cols));
+            if (!mineIndexes.includes(index)) {
+                mineIndexes.push(index);
+            }
+        }
+
+        mineIndexes.forEach((mineIndex) => {
+            cells[mineIndex].classList.add('mine');
+        });
+
+        // Handle cell click
+        cells.forEach((cell) => {
+            cell.addEventListener('click', () => {
+                if (cell.classList.contains('revealed') || cell.classList.contains('flag')) {
+                    return;
+                }
+                cell.classList.add('revealed');
+                if (cell.classList.contains('mine')) {
+                    gameOver();
+                } else {
+                    const row = parseInt(cell.dataset.row);
+                    const col = parseInt(cell.dataset.col);
+                    const mineCount = countAdjacentMines(row, col);
+                    if (mineCount > 0) {
+                        cell.textContent = mineCount;
+                    }
+                }
+            });
+
+            cell.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if (!cell.classList.contains('revealed')) {
+                    cell.classList.toggle('flag');
+                }
+            });
+        });
+
+        function countAdjacentMines(row, col) {
+            const directions = [
+                [-1, -1], [-1, 0], [-1, 1],
+                [0, -1],           [0, 1],
+                [1, -1], [1, 0], [1, 1]
+            ];
+
+            let count = 0;
+
+            directions.forEach(([dRow, dCol]) => {
+                const newRow = row + dRow;
+                const newCol = col + dCol;
+                if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols) {
+                    if (cells[newRow * cols + newCol].classList.contains('mine')) {
+                        count++;
+                    }
+                }
+            });
+
+            return count;
+        }
+
+        function gameOver() {
+            cells.forEach((cell) => {
+                if (cell.classList.contains('mine')) {
+                    cell.textContent = '💣';
+                }
+                cell.removeEventListener('click');
+                cell.removeEventListener('contextmenu');
+            });
+        }
+    </script>
+</body>
+</html>
